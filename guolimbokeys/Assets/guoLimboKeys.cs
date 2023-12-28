@@ -13,6 +13,18 @@ public class guoLimboKeys : MonoBehaviour {
    public KMBombInfo Bomb;
    public KMAudio Audio;
    //Register
+   public struct pair {
+      public int From {get; set;}
+      public int To {get; set;}
+      public override string ToString() {
+         return string.Format("({0}, {1})", From, To);
+      }
+      //constructor
+      public pair(int from, int to) {
+         From = from;
+         To = to;
+      }
+   }
    public KMSelectable[] bt;
    public GameObject[] pos;
    int[] curpos={0,1,2,3,4,5,6,7};
@@ -20,6 +32,8 @@ public class guoLimboKeys : MonoBehaviour {
    int scrambleStepsLeft=30;
    int moveDuration=1;
    string[] possibleSwaps={"TopBottomCW","TopBottomCCW","TopBottomCWCCW","TopBottomCCWCW","TopBottomDiagonal","TopBottomSwap","AllRowUp","AllRowDown","AllColumnLeftRight","AllCW","AllCCW","180AllRowUp","180AllRowDown"};
+   //overrides
+   
    //Dont touch
    static int ModuleIdCounter = 1;
    int ModuleId;
@@ -81,16 +95,29 @@ public class guoLimboKeys : MonoBehaviour {
    }
 
    void buttonPress(KMSelectable obj) {
-      Debug.LogFormat("pressed");
       Solve();
       for (int i=0;i<8;i++) {
          if (obj==bt[i]) {
+            Debug.LogFormat("pressed {0}, {1}", i, curpos[i]);
             scrambleAnimation(i);
          }
       }
       //Button.AddInteractionPunch();
       //GetComponent<KMAudio>().PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, Button.transform);
       //scrambleAnimation(0);
+   }
+
+   public int[] temp={0,1,2,3,4,5,6,7};
+   IEnumerator PreQ(int a, int b) {
+      yield return StartCoroutine(LerpMove(a, b));
+      temp[a]=curpos[b];
+   }
+   IEnumerator Movementf(List<pair> L) {
+      Array.Copy(temp, curpos, 8);
+      foreach (var g in L) {
+         StartCoroutine(PreQ(g.From, g.To));
+      }
+      yield return null;
    }
 
    IEnumerator LerpMove(int idx, int target) {
@@ -104,26 +131,15 @@ public class guoLimboKeys : MonoBehaviour {
       }
 
       bt[localidx].transform.position = pos[loctarget].transform.position;
-      curpos[loctarget]=localidx;
    }
    void scrambleAnimation(int r) {
-      int temp,temp2;
+      List<pair> L= new List<pair>();
       switch(r) {
          case 0: //TopBottomCW
-            temp=curpos[2]; //top
-            StartCoroutine(LerpMove(0,1));
-            StartCoroutine(LerpMove(1,3));
-            StartCoroutine(LerpMove(3,2));
-            StartCoroutine(LerpMove(2,0));
-            curpos[0]=temp;
-            //bottom
-            temp=curpos[6]; //top
-            StartCoroutine(LerpMove(4,5));
-            StartCoroutine(LerpMove(5,7));
-            StartCoroutine(LerpMove(7,6));
-            StartCoroutine(LerpMove(6,4));
-            curpos[4]=temp;
+            L=new List<pair>(){new pair(0,1),new pair(1,3),new pair(3,2),new pair(2,0),new pair(4,5),new pair(5,7),new pair(7,6),new pair(6,4)};
+            StartCoroutine(Movementf(L));
             break;
+/*
          case 1: //TopBottomCCW
             temp=curpos[0]; //top
             StartCoroutine(LerpMove(1,0));
@@ -188,6 +204,7 @@ public class guoLimboKeys : MonoBehaviour {
             curpos[4]=temp;
             curpos[5]=temp2;
             break;
+*/
          default:
             return;
       }
