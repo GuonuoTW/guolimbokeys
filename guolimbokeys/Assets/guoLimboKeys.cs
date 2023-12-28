@@ -110,16 +110,16 @@ public class guoLimboKeys : MonoBehaviour {
    public int[] temp={0,1,2,3,4,5,6,7};
    IEnumerator PreQ(int a, int b) {
       yield return StartCoroutine(LerpMove(a, b));
-      temp[a]=curpos[b];
+      temp[b]=curpos[a];
    }
    IEnumerator Movementf(List<pair> L) {
-      Array.Copy(temp, curpos, 8);
+      for (int i=0;i<8;i++) temp[i]=curpos[i];
       foreach (var g in L) {
          StartCoroutine(PreQ(g.From, g.To));
       }
+      for (int i=0;i<8;i++) curpos[i]=temp[i];
       yield return null;
    }
-
    IEnumerator LerpMove(int idx, int target) {
       float dtime=0;
       int localidx=curpos[idx];
